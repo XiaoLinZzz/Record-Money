@@ -1,0 +1,89 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.swift text diff=swift
+*.h text
+*.m text
+*.mm text
+*.c text
+*.cpp text
+*.hpp text
+
+# Xcode project files
+*.pbxproj merge=union
+*.xcworkspacedata merge=union
+
+# Swift Package Manager
+Package.swift text
+Package.resolved text
+
+# Configuration files
+*.xcconfig text
+*.plist text
+*.entitlements text
+*.strings text
+*.stringsdict text
+
+# Documentation
+*.md text
+*.markdown text
+*.txt text
+
+# Scripts
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+
+# JSON / YAML
+*.json text
+*.yaml text
+*.yml text
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.rar binary
+*.7z binary
+
+# CoreML Models
+*.mlmodel binary
+*.mlmodelc binary
+
+# Compiled files
+*.o binary
+*.a binary
+*.dylib binary
+*.framework binary
+
+# Xcode files
+*.xcodeproj/** binary
+*.xcworkspace/** binary
+*.playground/** binary
+
+# Localization
+*.lproj/*.strings text
+
+# Git
+.gitignore text
+.gitattributes text
+.gitmodules text
+
+# CI/CD
+.github/** text
+*.yml text

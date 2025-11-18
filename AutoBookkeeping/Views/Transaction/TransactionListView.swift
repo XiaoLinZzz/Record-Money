@@ -19,6 +19,7 @@ struct TransactionListView: View {
 
     @State private var transactions: [Transaction] = []
     @State private var showAddTransaction = false
+    @State private var showReceiptScanner = false
     @State private var selectedTransaction: Transaction?
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -41,17 +42,32 @@ struct TransactionListView: View {
             .navigationTitle("交易记录")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showAddTransaction = true
-                        HapticManager.shared.lightImpact()  // 按钮点击反馈
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                    HStack(spacing: 16) {
+                        // OCR 扫描按钮
+                        Button {
+                            showReceiptScanner = true
+                            HapticManager.shared.lightImpact()  // 按钮点击反馈
+                        } label: {
+                            Image(systemName: "doc.text.viewfinder")
+                                .font(.title2)
+                        }
+
+                        // 手动添加按钮
+                        Button {
+                            showAddTransaction = true
+                            HapticManager.shared.lightImpact()  // 按钮点击反馈
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showAddTransaction) {
                 AddTransactionView()
+            }
+            .sheet(isPresented: $showReceiptScanner) {
+                ReceiptScannerView()
             }
             .sheet(item: $selectedTransaction) { transaction in
                 TransactionDetailView(transaction: transaction)
@@ -132,7 +148,7 @@ struct TransactionListView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text("点击右上角 + 号手动添加\n或完成快捷指令配置后自动记账")
+            Text("点击右上角 + 号手动添加\n或使用扫描按钮识别小票")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

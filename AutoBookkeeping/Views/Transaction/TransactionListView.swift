@@ -22,6 +22,8 @@ struct TransactionListView: View {
     @State private var selectedTransaction: Transaction?
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var transactionToDelete: Transaction?
+    @State private var showDeleteAlert = false
 
     // MARK: - Body
 
@@ -73,6 +75,19 @@ struct TransactionListView: View {
                     await loadTransactions()
                 }
             }
+            .alert("确认删除", isPresented: $showDeleteAlert) {
+                Button("取消", role: .cancel) {
+                    transactionToDelete = nil
+                }
+                Button("删除", role: .destructive) {
+                    if let transaction = transactionToDelete {
+                        deleteTransaction(transaction)
+                        transactionToDelete = nil
+                    }
+                }
+            } message: {
+                Text("确定要删除这条交易记录吗？此操作无法撤销。")
+            }
         }
     }
 
@@ -87,9 +102,10 @@ struct TransactionListView: View {
                             .onTapGesture {
                                 selectedTransaction = transaction
                             }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
-                                    deleteTransaction(transaction)
+                                    transactionToDelete = transaction
+                                    showDeleteAlert = true
                                 } label: {
                                     Label("删除", systemImage: "trash")
                                 }

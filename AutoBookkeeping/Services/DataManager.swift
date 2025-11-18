@@ -155,6 +155,43 @@ class DataManager: ObservableObject {
         )
     }
 
+    /// 更新交易记录（指定字段）
+    /// - Parameters:
+    ///   - transaction: 要更新的交易对象
+    ///   - amount: 新的金额
+    ///   - merchant: 新的商家名称
+    ///   - categoryName: 新的分类名称
+    ///   - type: 新的类型（支出/收入）
+    ///   - timestamp: 新的时间戳
+    ///   - note: 新的备注
+    func updateTransaction(
+        _ transaction: Transaction,
+        amount: Double,
+        merchant: String,
+        categoryName: String,
+        type: String,
+        timestamp: Date,
+        note: String?
+    ) async throws {
+        // 更新所有字段
+        transaction.amount = amount
+        transaction.merchant = merchant
+        transaction.categoryName = categoryName
+        transaction.type = type
+        transaction.timestamp = timestamp
+        transaction.note = note
+        transaction.updatedAt = Date()
+
+        // 保存到数据库
+        try modelContext.save()
+
+        // 发送数据变更通知
+        NotificationCenter.default.post(
+            name: .transactionDidChange,
+            object: nil
+        )
+    }
+
     /// 删除交易记录（软删除）
     /// - Parameter transaction: 交易对象
     func deleteTransaction(_ transaction: Transaction) async throws {

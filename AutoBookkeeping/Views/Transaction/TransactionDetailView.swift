@@ -16,6 +16,11 @@ struct TransactionDetailView: View {
     // MARK: - Environment
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var dataManager: DataManager
+
+    // MARK: - State
+
+    @State private var showEditView = false
 
     // MARK: - Body
 
@@ -71,11 +76,21 @@ struct TransactionDetailView: View {
             .navigationTitle("交易详情")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("编辑") {
+                        showEditView = true
+                    }
+                }
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("完成") {
                         dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $showEditView) {
+                EditTransactionView(originalTransaction: transaction)
+                    .environmentObject(dataManager)
             }
         }
     }
@@ -101,4 +116,5 @@ struct DetailRow: View {
 
 #Preview {
     TransactionDetailView(transaction: Transaction.preview)
+        .environmentObject(DataManager.shared)
 }

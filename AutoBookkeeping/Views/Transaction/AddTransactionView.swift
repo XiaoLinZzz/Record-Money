@@ -67,6 +67,9 @@ struct AddTransactionView: View {
                         Text("收入").tag("income")
                     }
                     .pickerStyle(.segmented)
+                    .onChange(of: transactionType) { _, _ in
+                        HapticManager.shared.selectionChanged()  // 切换类型反馈
+                    }
                 }
 
                 // 日期
@@ -86,6 +89,7 @@ struct AddTransactionView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
                         dismiss()
+                        HapticManager.shared.lightImpact()  // 取消反馈
                     }
                 }
 
@@ -157,9 +161,11 @@ struct AddTransactionView: View {
 
         do {
             try await dataManager.saveTransaction(transaction)
+            HapticManager.shared.success()  // 保存成功反馈
             dismiss()
         } catch {
             errorMessage = "保存失败: \(error.localizedDescription)"
+            HapticManager.shared.error()  // 保存失败反馈
         }
     }
 }

@@ -43,6 +43,7 @@ struct TransactionListView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showAddTransaction = true
+                        HapticManager.shared.lightImpact()  // 按钮点击反馈
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
@@ -60,6 +61,7 @@ struct TransactionListView: View {
             }
             .refreshable {
                 await loadTransactions()
+                HapticManager.shared.mediumImpact()  // 刷新完成反馈
             }
             .alert("错误", isPresented: .constant(errorMessage != nil)) {
                 Button("确定") {
@@ -78,9 +80,11 @@ struct TransactionListView: View {
             .alert("确认删除", isPresented: $showDeleteAlert) {
                 Button("取消", role: .cancel) {
                     transactionToDelete = nil
+                    HapticManager.shared.lightImpact()  // 取消反馈
                 }
                 Button("删除", role: .destructive) {
                     if let transaction = transactionToDelete {
+                        HapticManager.shared.heavyImpact()  // 删除操作重要反馈
                         deleteTransaction(transaction)
                         transactionToDelete = nil
                     }
@@ -101,6 +105,7 @@ struct TransactionListView: View {
                         TransactionRow(transaction: transaction)
                             .onTapGesture {
                                 selectedTransaction = transaction
+                                HapticManager.shared.lightImpact()  // 点击反馈
                             }
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
@@ -134,6 +139,7 @@ struct TransactionListView: View {
 
             Button("添加交易") {
                 showAddTransaction = true
+                HapticManager.shared.lightImpact()  // 按钮点击反馈
             }
             .buttonStyle(.borderedProminent)
         }
@@ -158,8 +164,10 @@ struct TransactionListView: View {
             do {
                 try await dataManager.deleteTransaction(transaction)
                 await loadTransactions()
+                HapticManager.shared.success()  // 删除成功反馈
             } catch {
                 errorMessage = "删除失败: \(error.localizedDescription)"
+                HapticManager.shared.error()  // 删除失败反馈
             }
         }
     }

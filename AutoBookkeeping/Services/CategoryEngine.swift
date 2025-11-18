@@ -68,6 +68,22 @@ class CategoryEngine {
 
     // MARK: - Public Methods
 
+    /// 推荐分类（供 UI 使用）
+    /// - Parameter merchant: 商家名称
+    /// - Returns: 推荐的分类名称
+    func suggestCategory(for merchant: String) async -> String? {
+        // 如果商家名称为空，返回 nil
+        guard !merchant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+
+        // 使用推断引擎
+        let category = inferCategory(merchant: merchant, rawText: nil)
+
+        // 如果是"其他"，则不推荐
+        return category == "其他" ? nil : category
+    }
+
     /// 推断分类
     /// - Parameters:
     ///   - merchant: 商家名称
@@ -385,5 +401,29 @@ extension CategoryEngine {
             stats[record.category, default: 0] += 1
         }
         return stats
+    }
+
+    /// 获取训练数据数量
+    func getTrainingDataCount() -> Int {
+        return correctionHistory.count
+    }
+
+    /// 导出训练数据（用于 CoreML 训练）
+    /// - Returns: CSV 格式的训练数据
+    func exportTrainingDataForML() -> String {
+        var csv = "text,label\n"
+
+        for record in correctionHistory {
+            // 转义逗号和引号
+            let escapedMerchant = record.merchant.replacingOccurrences(of: "\"", with: "\"\"")
+            csv += "\"\(escapedMerchant)\",\"\(record.category)\"\n"
+        }
+
+        return csv
+    }
+
+    /// 获取训练数据数组（用于 CoreML 训练）
+    func getTrainingData() -> [(text: String, label: String)] {
+        return correctionHistory.map { (text: $0.merchant, label: $0.category) }
     }
 }

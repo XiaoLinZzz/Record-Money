@@ -27,17 +27,45 @@ struct TransactionListView: View {
     @State private var transactionToDelete: Transaction?
     @State private var showDeleteAlert = false
 
+    // 搜索和筛选
+    @State private var filter = TransactionFilter()
+    @State private var showAdvancedFilter = false
+    @State private var categories: [String] = []
+
+    // MARK: - Computed Properties
+
+    private var filteredTransactions: [Transaction] {
+        transactions.filter { filter.matches($0) }
+    }
+
     // MARK: - Body
 
     var body: some View {
         NavigationStack {
-            Group {
-                if isLoading {
-                    ProgressView("加载中...")
-                } else if transactions.isEmpty {
-                    emptyStateView
-                } else {
-                    transactionList
+            VStack(spacing: 0) {
+                // 筛选标签（如果有分类数据）
+                if !categories.isEmpty && !transactions.isEmpty {
+                    FilterTagsView(
+                        filter: $filter,
+                        categories: categories,
+                        onAdvancedFilter: {
+                            showAdvancedFilter = true
+                        }
+                    )
+                    .background(Color(.systemGroupedBackground))
+                }
+
+                // 主内容
+                Group {
+                    if isLoading {
+                        ProgressView("加载中...")
+                    } else if transactions.isEmpty {
+                        emptyStateView
+                    } else if filteredTransactions.isEmpty {
+                        emptyFilterResultView
+                    } else {
+                        transactionList
+                    }
                 }
             }
             .navigationTitle("交易记录")
@@ -73,6 +101,14 @@ struct TransactionListView: View {
                     }
                 }
             }
+            .searchable(
+                text: $filter.searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "搜索交易..."
+            )
+            .onChange(of: filter.searchText) { _, _ in
+                HapticManager.shared.lightImpact()
+            }
             .sheet(isPresented: $showAddTransaction) {
                 AddTransactionView()
             }
@@ -82,11 +118,15 @@ struct TransactionListView: View {
             .sheet(isPresented: $showReceiptScanner) {
                 ReceiptScannerView()
             }
+            .sheet(isPresented: $showAdvancedFilter) {
+                AdvancedFilterSheet(filter: $filter)
+            }
             .sheet(item: $selectedTransaction) { transaction in
                 TransactionDetailView(transaction: transaction)
             }
             .task {
                 await loadTransactions()
+                await loadCategories()
             }
             .refreshable {
                 await loadTransactions()
@@ -175,6 +215,34 @@ struct TransactionListView: View {
         .padding()
     }
 
+    private var emptyFilterResultView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+
+            Text("未找到匹配的交易")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            if filter.isActive {
+                Text("当前筛选条件下没有交易记录\n尝试调整筛选条件")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+
+                Button {
+                    filter.clear()
+                    HapticManager.shared.mediumImpact()
+                } label: {
+                    Label("清除筛选", systemImage: "xmark.circle.fill")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+    }
+
     // MARK: - Methods
 
     private func loadTransactions() async {
@@ -203,10 +271,19 @@ struct TransactionListView: View {
 
     private var groupedTransactions: [Date: [Transaction]] {
         let calendar = Calendar.current
-        let grouped = Dictionary(grouping: transactions) { transaction in
+        let grouped = Dictionary(grouping: filteredTransactions) { transaction in
             calendar.startOfDay(for: transaction.timestamp)
         }
         return grouped
+    }
+
+    private func loadCategories() async {
+        do {
+            let fetchedCategories = try await dataManager.fetchCategories()
+            categories = fetchedCategories.map { $0.name }
+        } catch {
+            errorMessage = "加载分类失败: \(error.localizedDescription)"
+        }
     }
 
     private func formatSectionHeader(_ date: Date) -> String {

@@ -4,21 +4,25 @@
 
 ---
 
-## ⚡ 核心工作原理（v1.1 修正版）
+## ⚡ 核心工作原理（v2.0 操作按钮版）
 
-### 触发方式：捕获支付通知
+### 触发方式：iPhone 15 Pro 操作按钮 + 快捷指令
 
 ```
 用户在任意 App 支付（淘宝、美团、京东...）
     ↓
 唤起微信/支付宝完成支付
     ↓
-支付成功，iOS 弹出通知横幅
-    例如："微信支付：向星巴克付款 ¥35.00"
+支付成功，停留在支付结果页面
     ↓
-快捷指令自动化捕获到通知 ⚡
+按下 iPhone 15 Pro 操作按钮 ⚡
     ↓
-从通知文本提取：金额 + 商家
+快捷指令自动执行：
+    等待 0.5 秒 → 截图 → OCR 提取文本
+    ↓
+智能检测是否为支付页面
+    ↓
+正则表达式提取：金额 + 商家 + 支付方式
     ↓
 调用 AddTransactionIntent
     ↓
@@ -26,19 +30,26 @@ CategoryEngine 智能分类
     ↓
 DataManager 保存到数据库
     ↓
+删除临时截图
+    ↓
 NotificationManager 推送确认通知 ✅
 ```
 
 **关键优势**：
-- ✅ **不依赖 App 打开** - 监听通知而非 App 状态
-- ✅ **更精准触发** - 只在支付成功时触发
-- ✅ **更轻量** - 不需要截图和 OCR
+- ✅ **用户可控** - 主动按下按钮，无误触发
+- ✅ **精准可靠** - OCR 直接读取支付结果页面
 - ✅ **全场景支持** - 支持所有使用微信/支付宝的支付场景
+- ✅ **隐私安全** - 截图仅用于 OCR，处理后立即删除
+- ✅ **速度快** - 整个流程约 2 秒完成
+
+**硬件要求**：
+- 主要方式：iPhone 15 Pro / 15 Pro Max（支持操作按钮）
+- 替代方式：其他机型可使用 Siri、小组件、轻点背面等触发
 
 **快捷指令配置**：
-- 触发器：**通知** → 选择"微信"或"支付宝"
-- 条件：包含"支付成功"或"付款成功"
-- 操作：提取通知文本 → 正则匹配 → 调用 Intent
+- 类型：**快捷指令**（非自动化）
+- 触发：操作按钮 / Siri 语音 / 小组件
+- 操作流程：截图 → OCR → 正则匹配 → 调用 Intent → 删除截图
 
 详见：[docs/SHORTCUT_SETUP.md](docs/SHORTCUT_SETUP.md)
 
@@ -137,7 +148,18 @@ NotificationManager 推送确认通知 ✅
    - [ ] 添加 App Icon
    - [ ] 配置 Launch Screen
 
-3. **缺失的文件**
+3. **创建并部署快捷指令（重要）**
+   - [ ] 按照 [SHORTCUT_SETUP.md](docs/SHORTCUT_SETUP.md) 手动创建"快速记账"快捷指令
+   - [ ] 在快捷指令中配置好所有参数和正则表达式
+   - [ ] 点击快捷指令右上角"⋯"→ 共享 → 拷贝 iCloud 链接
+   - [ ] 将 iCloud 链接替换到 `SettingsView.swift` 中的占位符 `YOUR_SHORTCUT_ID`
+   ```swift
+   // 当前位置: AutoBookkeeping/Views/Settings/SettingsView.swift:25
+   Link(destination: URL(string: "https://www.icloud.com/shortcuts/YOUR_SHORTCUT_ID")!)
+   ```
+   - [ ] 测试 iCloud 链接是否可以正常下载快捷指令
+
+4. **缺失的文件**
    - [ ] Info.plist
    - [ ] Assets.xcassets
    - [ ] Preview Content

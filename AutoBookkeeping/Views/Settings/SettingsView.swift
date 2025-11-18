@@ -21,13 +21,30 @@ struct SettingsView: View {
             List {
                 // 快捷指令配置
                 Section("快捷指令") {
+                    // 一键添加快捷指令（推荐）
+                    Link(destination: URL(string: "https://www.icloud.com/shortcuts/YOUR_SHORTCUT_ID")!) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.down")
+                                .foregroundColor(.green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("一键添加快捷指令")
+                                    .foregroundColor(.primary)
+                                Text("推荐：快速完成配置")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
+                    Divider()
+
                     Button {
                         showOnboarding = true
                     } label: {
                         HStack {
                             Image(systemName: "wand.and.stars")
                                 .foregroundColor(.blue)
-                            Text("配置引导")
+                            Text("手动配置引导")
                         }
                     }
 
@@ -38,6 +55,10 @@ struct SettingsView: View {
                             Text("打开快捷指令 App")
                         }
                     }
+                } header: {
+                    Text("快捷指令")
+                } footer: {
+                    Text("建议使用"一键添加"，系统会自动下载并配置好所有参数。首次使用时，iOS 会请求截图和通知权限，请点击"允许"。")
                 }
 
                 // 通知设置

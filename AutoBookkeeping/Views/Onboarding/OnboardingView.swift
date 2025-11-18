@@ -162,7 +162,7 @@ struct ShortcutSetupPage: View {
                         .font(.title)
                         .fontWeight(.bold)
 
-                    Text("完成一次性配置，即可实现自动记账")
+                    Text("完成一次性配置，即可实现快速记账")
                         .foregroundColor(.secondary)
                 }
 
@@ -176,46 +176,43 @@ struct ShortcutSetupPage: View {
 
                     SetupStep(
                         number: 2,
-                        title: "创建自动化",
-                        description: "点击"自动化"标签 → 点击"+" → 选择"创建个人自动化""
+                        title: "创建快捷指令",
+                        description: "点击右上角"+"按钮，创建新快捷指令"
                     )
 
                     SetupStep(
                         number: 3,
-                        title: "设置触发条件",
+                        title: "添加操作",
                         description: """
-                        • 选择 "App"
-                        • 选择"微信"或"支付宝"
-                        • 触发时机: "已打开"
+                        按顺序添加以下操作：
+                        1. 等待（0.5 秒）
+                        2. 对屏幕截图
+                        3. 从图像获取文本
+                        4. 搜索并添加"添加交易记录" Intent
+                        5. 删除最后一张照片
                         """
                     )
 
                     SetupStep(
                         number: 4,
-                        title: "添加操作",
+                        title: "设置触发方式",
                         description: """
-                        1. 等待 1 秒
-                        2. 对屏幕截图
-                        3. 从图像获取文本
-                        4. 搜索并添加"添加交易记录" Intent
-                        5. 配置参数（金额、商家等）
-                        """
-                    )
+                        iPhone 15 Pro：
+                        设置 → 操作按钮 → 选择此快捷指令
 
-                    SetupStep(
-                        number: 5,
-                        title: "完成设置",
-                        description: "关闭"运行前询问"，保存自动化"
+                        其他机型：
+                        可使用 Siri、小组件或轻点背面触发
+                        """
                     )
                 }
 
                 // 提示信息
                 VStack(alignment: .leading, spacing: 12) {
                     Label {
-                        Text("首次使用时，iOS 会请求权限，请点击"允许"")
+                        Text("支付后按下操作按钮，即可快速记账")
                             .font(.caption)
                     } icon: {
-                        Image(systemName: "info.circle.fill")
+                        Image(systemName: "bolt.circle.fill")
                             .foregroundColor(.blue)
                     }
 
@@ -225,6 +222,14 @@ struct ShortcutSetupPage: View {
                     } icon: {
                         Image(systemName: "book.circle.fill")
                             .foregroundColor(.green)
+                    }
+
+                    Label {
+                        Text("截图仅用于识别，处理后立即删除")
+                            .font(.caption)
+                    } icon: {
+                        Image(systemName: "lock.shield.fill")
+                            .foregroundColor(.orange)
                     }
                 }
                 .padding()

@@ -20,6 +20,7 @@ struct TransactionListView: View {
     @State private var transactions: [Transaction] = []
     @State private var showAddTransaction = false
     @State private var showReceiptScanner = false
+    @State private var showSmartInput = false
     @State private var selectedTransaction: Transaction?
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -43,6 +44,15 @@ struct TransactionListView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 16) {
+                        // 智能输入按钮
+                        Button {
+                            showSmartInput = true
+                            HapticManager.shared.lightImpact()  // 按钮点击反馈
+                        } label: {
+                            Image(systemName: "sparkles")
+                                .font(.title2)
+                        }
+
                         // OCR 扫描按钮
                         Button {
                             showReceiptScanner = true
@@ -65,6 +75,9 @@ struct TransactionListView: View {
             }
             .sheet(isPresented: $showAddTransaction) {
                 AddTransactionView()
+            }
+            .sheet(isPresented: $showSmartInput) {
+                SmartInputView()
             }
             .sheet(isPresented: $showReceiptScanner) {
                 ReceiptScannerView()
@@ -148,7 +161,7 @@ struct TransactionListView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text("点击右上角 + 号手动添加\n或使用扫描按钮识别小票")
+            Text("点击右上角按钮添加交易：\n✨ 智能输入 | 📄 扫描小票 | ➕ 手动添加")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# AutoBookkeeping Xcode 项目快速设置脚本
-# 用法：./setup-xcode-project.sh
+# AutoBookkeeping Xcode 项目自动化设置脚本
+# 用法：./setup-xcode-project.sh [--auto-install]
+#   --auto-install: 自动安装 Homebrew 和 xcodegen（需要确认）
 
 set -e
 
-echo "🚀 AutoBookkeeping Xcode 项目设置脚本"
-echo "======================================"
+echo "🚀 AutoBookkeeping Xcode 项目自动化设置脚本"
+echo "================================================"
 echo ""
 
 # 检查是否在 macOS 上运行
@@ -56,128 +57,201 @@ if [ ! -d "$SOURCE_DIR" ]; then
     exit 1
 fi
 
-echo "📋 接下来将执行以下步骤："
-echo "   1. 使用 xcodegen 创建 Xcode 项目（如果已安装）"
-echo "   2. 或者提供手动创建项目的详细说明"
+# 检查 project.yml 是否存在
+if [ ! -f "project.yml" ]; then
+    echo "❌ 错误：找不到 project.yml 配置文件"
+    echo "   此文件应该已经在仓库中提供"
+    exit 1
+fi
+
+# 函数：安装 Homebrew
+install_homebrew() {
+    echo ""
+    echo "📦 正在安装 Homebrew..."
+    echo "   这可能需要几分钟，请耐心等待..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # 添加 Homebrew 到 PATH（针对 Apple Silicon Mac）
+    if [[ $(uname -m) == 'arm64' ]]; then
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+
+    echo "✅ Homebrew 安装完成！"
+}
+
+# 函数：安装 xcodegen
+install_xcodegen() {
+    echo ""
+    echo "📦 正在安装 xcodegen..."
+    brew install xcodegen
+    echo "✅ xcodegen 安装完成！"
+}
+
+echo "📋 检查依赖工具..."
 echo ""
 
-# 检查是否安装了 xcodegen
-if command -v xcodegen &> /dev/null; then
-    echo "✅ 检测到 xcodegen"
-    echo "   将自动生成 Xcode 项目..."
-    echo ""
+# 检查 Homebrew
+NEED_HOMEBREW=false
+if ! command -v brew &> /dev/null; then
+    echo "⚠️  未检测到 Homebrew（macOS 包管理器）"
+    NEED_HOMEBREW=true
+else
+    echo "✅ 检测到 Homebrew: $(brew --version | head -n 1)"
+fi
 
-    # 生成项目（如果有 project.yml）
-    if [ -f "project.yml" ]; then
-        xcodegen generate
-        echo "✅ Xcode 项目已生成！"
+# 检查 xcodegen
+NEED_XCODEGEN=false
+if ! command -v xcodegen &> /dev/null; then
+    echo "⚠️  未检测到 xcodegen（Xcode 项目生成工具）"
+    NEED_XCODEGEN=true
+else
+    echo "✅ 检测到 xcodegen: $(xcodegen --version)"
+fi
+
+echo ""
+
+# 如果需要安装工具
+if [ "$NEED_HOMEBREW" = true ] || [ "$NEED_XCODEGEN" = true ]; then
+    # 检查是否有 --auto-install 参数
+    if [[ "$1" == "--auto-install" ]]; then
+        AUTO_INSTALL=true
+    else
+        echo "════════════════════════════════════════════════════"
+        echo "需要安装以下工具才能自动生成 Xcode 项目："
+        echo "════════════════════════════════════════════════════"
+        [ "$NEED_HOMEBREW" = true ] && echo "  • Homebrew (包管理器)"
+        [ "$NEED_XCODEGEN" = true ] && echo "  • xcodegen (项目生成工具)"
         echo ""
-        echo "🎉 设置完成！"
+        echo "这些工具完全免费且开源，安装后可以大大简化 Xcode 项目配置。"
         echo ""
-        echo "📖 下一步："
-        echo "   1. 双击打开 $PROJECT_NAME.xcodeproj"
-        echo "   2. 选择模拟器（如 iPhone 15 Pro）"
-        echo "   3. 点击运行按钮 ▶️ 或按 ⌘+R"
+        read -p "是否要自动安装这些工具？(y/n): " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            AUTO_INSTALL=true
+        else
+            AUTO_INSTALL=false
+        fi
+    fi
+
+    if [ "$AUTO_INSTALL" = true ]; then
+        # 安装 Homebrew
+        if [ "$NEED_HOMEBREW" = true ]; then
+            install_homebrew
+        fi
+
+        # 安装 xcodegen
+        if [ "$NEED_XCODEGEN" = true ]; then
+            install_xcodegen
+        fi
+
+        echo ""
+        echo "✅ 所有依赖工具已安装完成！"
+        echo ""
+    else
+        echo ""
+        echo "⚠️  跳过自动安装。你可以手动安装："
+        echo ""
+        if [ "$NEED_HOMEBREW" = true ]; then
+            echo "1. 安装 Homebrew："
+            echo "   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+            echo ""
+        fi
+        if [ "$NEED_XCODEGEN" = true ]; then
+            echo "2. 安装 xcodegen："
+            echo "   brew install xcodegen"
+            echo ""
+        fi
+        echo "安装完成后，重新运行此脚本："
+        echo "   ./setup-xcode-project.sh"
         echo ""
         exit 0
     fi
 fi
 
-echo "⚠️  未检测到 xcodegen 或 project.yml"
-echo ""
-echo "📝 请按照以下步骤在 Xcode 中手动创建项目："
-echo ""
+# 开始生成项目
 echo "════════════════════════════════════════════════════"
-echo "第一步：创建新的 Xcode 项目"
+echo "🔨 正在生成 Xcode 项目..."
 echo "════════════════════════════════════════════════════"
 echo ""
-echo "1. 打开 Xcode"
-echo "2. 点击 'Create a new Xcode project'"
-echo "3. 选择模板："
-echo "   - 平台：iOS"
-echo "   - 类型：App"
-echo "   - 点击 Next"
-echo ""
-echo "4. 项目配置："
-echo "   - Product Name: AutoBookkeeping"
-echo "   - Team: 选择你的 Apple ID（或 None）"
-echo "   - Organization Identifier: com.yourcompany"
-echo "   - Interface: SwiftUI"
-echo "   - Language: Swift"
-echo "   - Storage: SwiftData"
-echo "   - 取消勾选 Include Tests"
-echo "   - 点击 Next"
-echo ""
-echo "5. 保存位置："
-echo "   - 创建一个新文件夹（例如：~/Desktop/AutoBookkeeping-Xcode）"
-echo "   - 勾选 'Create Git repository'"
-echo "   - 点击 Create"
-echo ""
+
+# 如果已存在项目文件，先备份
+if [ -d "$PROJECT_NAME.xcodeproj" ]; then
+    BACKUP_NAME="$PROJECT_NAME.xcodeproj.backup.$(date +%Y%m%d_%H%M%S)"
+    echo "⚠️  检测到已存在的项目文件，将备份为："
+    echo "   $BACKUP_NAME"
+    mv "$PROJECT_NAME.xcodeproj" "$BACKUP_NAME"
+    echo ""
+fi
+
+# 运行 xcodegen
+if xcodegen generate; then
+    echo ""
+    echo "✅ Xcode 项目生成成功！"
+    echo ""
+else
+    echo ""
+    echo "❌ 项目生成失败"
+    echo "   请检查 project.yml 文件是否正确"
+    exit 1
+fi
+
+# 检查生成的项目文件
+if [ ! -d "$PROJECT_NAME.xcodeproj" ]; then
+    echo "❌ 错误：项目文件未生成"
+    exit 1
+fi
+
 echo "════════════════════════════════════════════════════"
-echo "第二步：导入源代码"
-echo "════════════════════════════════════════════════════"
-echo ""
-echo "1. 在 Xcode 左侧项目导航器中，删除自动生成的文件："
-echo "   - 右键点击 Item.swift → Delete → Move to Trash"
-echo ""
-echo "2. 在 Finder 中打开此目录："
-echo "   $SOURCE_DIR"
-echo ""
-echo "3. 将以下文件夹拖拽到 Xcode 项目中："
-echo "   ✓ Models/"
-echo "   ✓ Views/"
-echo "   ✓ Services/"
-echo "   ✓ Utilities/"
-echo "   ✓ Intents/"
-echo "   ✓ App/AutoBookkeepingApp.swift（替换现有的）"
-echo ""
-echo "4. 在弹出对话框中："
-echo "   ✓ 勾选 'Copy items if needed'"
-echo "   ✓ 勾选 'Create groups'"
-echo "   ✓ Target: AutoBookkeeping"
-echo "   ✓ 点击 Finish"
-echo ""
-echo "5. 导入 Resources："
-echo "   - 将 Resources/Assets.xcassets 拖入项目"
-echo "   - 勾选 'Copy items if needed'"
-echo ""
-echo "════════════════════════════════════════════════════"
-echo "第三步：配置项目"
+echo "🎉 设置完成！"
 echo "════════════════════════════════════════════════════"
 echo ""
-echo "1. 设置部署目标："
-echo "   - 选择项目 → TARGETS → AutoBookkeeping"
-echo "   - General → Minimum Deployments → iOS 17.0"
+echo "✅ Xcode 项目已自动配置完成，包括："
+echo "   • 主应用 (AutoBookkeeping)"
+echo "   • Widget 扩展 (BookkeepingWidget)"
+echo "   • App Groups 共享数据"
+echo "   • Siri & App Intents 支持"
+echo "   • 相机和相册权限配置"
 echo ""
-echo "2. 添加权限（Info.plist）："
-echo "   - 找到 Info.plist"
-echo "   - 添加以下权限："
-echo "     * Privacy - Camera Usage Description"
-echo "       值：需要使用相机扫描小票进行智能记账"
-echo "     * Privacy - Photo Library Usage Description"
-echo "       值：需要访问相册选择小票照片进行识别"
+echo "📖 下一步操作："
 echo ""
-echo "════════════════════════════════════════════════════"
-echo "第四步：运行项目"
-echo "════════════════════════════════════════════════════"
+echo "1️⃣  打开项目："
+echo "   双击打开：$PROJECT_NAME.xcodeproj"
+echo "   或运行命令：open $PROJECT_NAME.xcodeproj"
 echo ""
-echo "1. 选择模拟器："
-echo "   - 顶部工具栏 → 选择 'iPhone 15 Pro'"
+echo "2️⃣  配置签名（⚠️ 必须手动配置）："
+echo "   • 点击项目 → TARGETS → AutoBookkeeping"
+echo "   • Signing & Capabilities 标签页"
+echo "   • Team: 选择你的 Apple ID（或 None 用于模拟器）"
+echo "   • 对 BookkeepingWidget target 重复以上步骤"
 echo ""
-echo "2. 点击运行："
-echo "   - 点击 ▶️ 按钮"
-echo "   - 或按 ⌘+R"
+echo "3️⃣  自定义 Bundle ID（可选）："
+echo "   如果需要修改默认的 Bundle ID (com.yourcompany.autobookkeeping)："
+echo "   • 编辑 project.yml 文件"
+echo "   • 修改 bundleIdPrefix 字段"
+echo "   • 重新运行此脚本"
 echo ""
-echo "3. 等待编译（第一次需要 5-10 分钟）"
+echo "4️⃣  选择模拟器并运行："
+echo "   • 顶部工具栏选择设备（推荐：iPhone 15 Pro）"
+echo "   • 点击 ▶️ 按钮或按 ⌘+R"
+echo "   • 首次编译需要 5-10 分钟，请耐心等待"
 echo ""
 echo "════════════════════════════════════════════════════"
 echo ""
-echo "📚 详细文档请查看："
-echo "   $CURRENT_DIR/docs/GETTING_STARTED.md"
+echo "📚 详细文档："
+echo "   • 快速开始：$CURRENT_DIR/README.md"
+echo "   • 配置指南：$CURRENT_DIR/docs/XCODE_SETUP.md"
+echo "   • 常见问题：$CURRENT_DIR/docs/FAQ.md"
+echo ""
+echo "💡 提示："
+echo "   • 如需重新生成项目，再次运行此脚本即可"
+echo "   • 旧项目会自动备份，文件名带时间戳"
+echo "   • 修改 project.yml 后需要重新运行脚本"
 echo ""
 echo "🆘 遇到问题？"
-echo "   - 查看常见问题：docs/GETTING_STARTED.md#常见问题排查"
-echo "   - 或搜索错误信息"
+echo "   • 检查 Xcode 版本是否 >= 15.0"
+echo "   • 确保 macOS 版本 >= 14.0 (Sonoma)"
+echo "   • 查看详细错误信息并搜索解决方案"
 echo ""
-echo "🎉 祝你成功启动项目！"
+echo "🎉 祝你开发愉快！"
 echo ""

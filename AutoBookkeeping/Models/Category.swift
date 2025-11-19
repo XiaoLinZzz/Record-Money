@@ -39,6 +39,9 @@ class Category {
     /// 创建时间
     var createdAt: Date
 
+    /// 更新时间
+    var updatedAt: Date
+
     // MARK: - Computed Properties
 
     /// 颜色对象（用于 UI）
@@ -82,6 +85,7 @@ class Category {
         self.isSystem = isSystem
         self.order = order
         self.createdAt = Date()
+        self.updatedAt = Date()
     }
 
     // MARK: - Methods

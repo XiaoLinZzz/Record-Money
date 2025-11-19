@@ -80,6 +80,11 @@ class DataManager: ObservableObject {
         return modelContainer
     }
 
+    /// 保存上下文（手动保存更改）
+    func saveContext() async throws {
+        try modelContext.save()
+    }
+
     // MARK: - Transaction Operations
 
     /// 保存交易记录

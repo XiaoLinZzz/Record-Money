@@ -1,0 +1,22 @@
+{
+  "name": "autobookkeeping-docs",
+  "version": "1.0.0",
+  "description": "AutoBookkeeping 用户文档",
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.0.0",
+    "vue": "^3.4.0"
+  },
+  "keywords": [
+    "bookkeeping",
+    "documentation",
+    "vitepress"
+  ],
+  "author": "Lujie",
+  "license": "MIT"
+}

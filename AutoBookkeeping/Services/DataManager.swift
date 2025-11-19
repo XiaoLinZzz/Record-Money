@@ -108,36 +108,97 @@ class DataManager: ObservableObject {
         category: String? = nil,
         type: String? = nil
     ) async throws -> [Transaction] {
-        var descriptor = FetchDescriptor<Transaction>(
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
 
-        // 构建谓词
-        var predicates: [Predicate<Transaction>] = [
-            #Predicate { !$0.isDeleted }
-        ]
+        let descriptor: FetchDescriptor<Transaction>
 
-        if let start = startDate, let end = endDate {
-            predicates.append(#Predicate { transaction in
-                transaction.timestamp >= start && transaction.timestamp <= end
-            })
-        }
+        // 根据参数组合构建不同的 Predicate
+        // SwiftData 的 Predicate 必须在编译时确定，不能动态组合
+        switch (startDate, endDate, category, type) {
+        // 所有参数都有
+        case let (.some(start), .some(end), .some(cat), .some(typ)):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.timestamp >= start &&
+                    $0.timestamp <= end &&
+                    $0.categoryName == cat &&
+                    $0.type == typ
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
 
-        if let category = category {
-            predicates.append(#Predicate { transaction in
-                transaction.categoryName == category
-            })
-        }
+        // 有日期范围和分类
+        case let (.some(start), .some(end), .some(cat), .none):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.timestamp >= start &&
+                    $0.timestamp <= end &&
+                    $0.categoryName == cat
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
 
-        if let type = type {
-            predicates.append(#Predicate { transaction in
-                transaction.type == type
-            })
-        }
+        // 有日期范围和类型
+        case let (.some(start), .some(end), .none, .some(typ)):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.timestamp >= start &&
+                    $0.timestamp <= end &&
+                    $0.type == typ
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
 
-        // 组合所有谓词
-        descriptor.predicate = #Predicate { transaction in
-            predicates.allSatisfy { $0.evaluate(transaction) }
+        // 只有日期范围
+        case let (.some(start), .some(end), .none, .none):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.timestamp >= start &&
+                    $0.timestamp <= end
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+
+        // 有分类和类型
+        case let (.none, .none, .some(cat), .some(typ)):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.categoryName == cat &&
+                    $0.type == typ
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+
+        // 只有分类
+        case let (.none, .none, .some(cat), .none):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.categoryName == cat
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+
+        // 只有类型
+        case let (.none, .none, .none, .some(typ)):
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate {
+                    !$0.isDeleted &&
+                    $0.type == typ
+                },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+
+        // 没有任何筛选条件
+        default:
+            descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate { !$0.isDeleted },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
         }
 
         return try modelContext.fetch(descriptor)

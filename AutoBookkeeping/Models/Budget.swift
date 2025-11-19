@@ -12,18 +12,37 @@ import SwiftData
 @Model
 class Budget {
 
+    // MARK: - Nested Types
+
+    /// 预算周期枚举
+    enum BudgetPeriod: String, Codable, CaseIterable {
+        case daily = "daily"
+        case weekly = "weekly"
+        case monthly = "monthly"
+        case yearly = "yearly"
+
+        var displayText: String {
+            switch self {
+            case .daily: return "每日"
+            case .weekly: return "每周"
+            case .monthly: return "每月"
+            case .yearly: return "每年"
+            }
+        }
+    }
+
     // MARK: - Properties
 
     /// 唯一标识符
     @Attribute(.unique) var id: UUID
 
-    /// 分类名称
+    /// 分类名称（nil 表示总预算）
     var categoryName: String
 
     /// 预算金额
     var amount: Double
 
-    /// 预算周期类型 (monthly/yearly)
+    /// 预算周期类型 (daily/weekly/monthly/yearly)
     var period: String
 
     /// 开始日期
@@ -40,16 +59,30 @@ class Budget {
 
     // MARK: - Computed Properties
 
+    /// 是否为总预算（兼容性属性）
+    var isTotalBudget: Bool {
+        categoryName.isEmpty || categoryName == "总预算"
+    }
+
+    /// 是否激活（isEnabled 的别名，用于兼容性）
+    var isActive: Bool {
+        get { isEnabled }
+        set { isEnabled = newValue }
+    }
+
+    /// 预算周期枚举
+    var periodEnum: BudgetPeriod {
+        BudgetPeriod(rawValue: period) ?? .monthly
+    }
+
+    /// 显示名称
+    var displayName: String {
+        isTotalBudget ? "总预算" : categoryName
+    }
+
     /// 预算周期显示文本
     var periodDisplayText: String {
-        switch period {
-        case "monthly":
-            return "每月"
-        case "yearly":
-            return "每年"
-        default:
-            return "未知"
-        }
+        periodEnum.displayText
     }
 
     /// 格式化预算金额

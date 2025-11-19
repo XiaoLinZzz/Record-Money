@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import SwiftData
 
 /// 分类模型
@@ -43,6 +44,16 @@ class Category {
     /// 颜色对象（用于 UI）
     var colorHex: String {
         color
+    }
+
+    /// 颜色值（SwiftUI Color 对象）
+    var colorValue: Color {
+        Color(hex: color) ?? .blue
+    }
+
+    /// 是否为自定义分类
+    var isCustom: Bool {
+        !isSystem
     }
 
     // MARK: - Initialization

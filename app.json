@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "无感记账",
+    "slug": "record-money",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourdomain.recordmoney",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "需要相机权限来扫描小票",
+        "NSPhotoLibraryUsageDescription": "需要相册权限来选择小票图片",
+        "NSUserNotificationsUsageDescription": "需要通知权限来提醒您记账和预算提醒"
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.yourdomain.recordmoney"
+        ]
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "需要相机权限来扫描小票"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "需要相册权限来选择小票图片"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}

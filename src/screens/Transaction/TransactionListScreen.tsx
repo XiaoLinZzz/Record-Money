@@ -21,19 +21,38 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import AddTransactionModal from './AddTransactionModal';
 import EditTransactionModal from './EditTransactionModal';
+import SmartInputModal from './SmartInputModal';
+import { useNavigation } from '@react-navigation/native';
 
 const TransactionListScreen: React.FC = () => {
+  const navigation = useNavigation();
   const database = useDatabase();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSmartInputModal, setShowSmartInputModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     DataManager.initialize(database);
     loadTransactions();
+
+    // 设置导航栏按钮
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowSmartInputModal(true);
+          }}
+          style={{ marginRight: 16 }}
+        >
+          <Icon name="sparkles" size={24} color="#007AFF" />
+        </TouchableOpacity>
+      ),
+    });
 
     // 监听数据变更
     const listener = () => {
@@ -44,7 +63,7 @@ const TransactionListScreen: React.FC = () => {
     return () => {
       DataManager.off('transactionDidChange', listener);
     };
-  }, [database]);
+  }, [database, navigation]);
 
   const loadTransactions = async () => {
     try {
@@ -214,6 +233,12 @@ const TransactionListScreen: React.FC = () => {
           setShowEditModal(false);
           setSelectedTransaction(null);
         }}
+      />
+
+      {/* Smart Input Modal */}
+      <SmartInputModal
+        visible={showSmartInputModal}
+        onClose={() => setShowSmartInputModal(false)}
       />
     </View>
   );

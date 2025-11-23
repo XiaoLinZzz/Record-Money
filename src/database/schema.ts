@@ -49,7 +49,8 @@ export const schema = appSchema({
         { name: 'amount', type: 'number' },
         { name: 'period', type: 'string' }, // daily/weekly/monthly/yearly
         { name: 'start_date', type: 'number' },
-        { name: 'is_enabled', type: 'boolean' },
+        { name: 'alert_threshold', type: 'number' }, // 预警阈值（默认0.9）
+        { name: 'is_active', type: 'boolean' },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],

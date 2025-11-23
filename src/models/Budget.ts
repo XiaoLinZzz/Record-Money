@@ -21,7 +21,7 @@ export default class Budget extends Model {
   // MARK: - Properties
 
   /** 分类名称（空字符串表示总预算） */
-  @field('category_name') categoryName!: string;
+  @field('category_name') categoryName?: string;
 
   /** 预算金额 */
   @field('amount') amount!: number;
@@ -32,30 +32,28 @@ export default class Budget extends Model {
   /** 开始日期 */
   @date('start_date') startDate!: Date;
 
-  /** 是否启用 */
-  @field('is_enabled') isEnabled!: boolean;
+  /** 预警阈值（0-1，默认0.9表示90%） */
+  @field('alert_threshold') alertThreshold!: number;
+
+  /** 是否激活 */
+  @field('is_active') isActive!: boolean;
 
   /** 创建时间 */
   @readonly @date('created_at') createdAt!: Date;
 
   /** 更新时间 */
-  @readonly @date('updated_at') updatedAt!: Date;
+  @date('updated_at') updatedAt!: Date;
 
   // MARK: - Computed Properties
 
   /** 是否为总预算 */
   get isTotalBudget(): boolean {
-    return this.categoryName === '' || this.categoryName === '总预算';
-  }
-
-  /** 是否激活（isEnabled 的别名，用于兼容性） */
-  get isActive(): boolean {
-    return this.isEnabled;
+    return !this.categoryName || this.categoryName === '' || this.categoryName === '总预算';
   }
 
   /** 显示名称 */
   get displayName(): string {
-    return this.isTotalBudget ? '总预算' : this.categoryName;
+    return this.isTotalBudget ? '总预算' : (this.categoryName || '未知');
   }
 
   /** 预算周期显示文本 */
@@ -76,15 +74,17 @@ export default class Budget extends Model {
   async updateAmount(newAmount: number): Promise<void> {
     await this.update(record => {
       record.amount = newAmount;
+      record.updatedAt = new Date();
     });
   }
 
   /**
    * 切换启用状态
    */
-  async toggleEnabled(): Promise<void> {
+  async toggleActive(): Promise<void> {
     await this.update(record => {
-      record.isEnabled = !record.isEnabled;
+      record.isActive = !record.isActive;
+      record.updatedAt = new Date();
     });
   }
 }

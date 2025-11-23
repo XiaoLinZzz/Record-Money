@@ -18,12 +18,18 @@ import DataManager from '../../services/DataManager';
 import Transaction from '../../models/Transaction';
 import { format, startOfDay, isSameDay } from 'date-fns';
 import Icon from 'react-native-vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
+import AddTransactionModal from './AddTransactionModal';
+import EditTransactionModal from './EditTransactionModal';
 
 const TransactionListScreen: React.FC = () => {
   const database = useDatabase();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     DataManager.initialize(database);
@@ -65,8 +71,17 @@ const TransactionListScreen: React.FC = () => {
     }
   };
 
+  const handleTransactionPress = (transaction: Transaction) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedTransaction(transaction);
+    setShowEditModal(true);
+  };
+
   const renderTransactionItem = ({ item }: { item: Transaction }) => (
-    <TouchableOpacity style={styles.transactionCard}>
+    <TouchableOpacity
+      style={styles.transactionCard}
+      onPress={() => handleTransactionPress(item)}
+    >
       <View style={styles.transactionLeft}>
         <View style={styles.iconContainer}>
           <Icon name="card-outline" size={24} color="#007AFF" />
@@ -132,7 +147,24 @@ const TransactionListScreen: React.FC = () => {
       <View style={styles.emptyContainer}>
         <Icon name="receipt-outline" size={80} color="#C7C7CC" />
         <Text style={styles.emptyText}>暂无交易记录</Text>
-        <Text style={styles.emptySubText}>点击右上角添加第一笔记账</Text>
+        <Text style={styles.emptySubText}>点击 + 按钮添加第一笔记账</Text>
+
+        {/* Floating Action Button */}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShowAddModal(true);
+          }}
+        >
+          <Icon name="add" size={32} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* Add Transaction Modal */}
+        <AddTransactionModal
+          visible={showAddModal}
+          onClose={() => setShowAddModal(false)}
+        />
       </View>
     );
   }
@@ -155,6 +187,33 @@ const TransactionListScreen: React.FC = () => {
             ))}
           </View>
         )}
+      />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowAddModal(true);
+        }}
+      >
+        <Icon name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* Add Transaction Modal */}
+      <AddTransactionModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+      />
+
+      {/* Edit Transaction Modal */}
+      <EditTransactionModal
+        visible={showEditModal}
+        transaction={selectedTransaction}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedTransaction(null);
+        }}
       />
     </View>
   );
@@ -252,6 +311,22 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 12,
     color: '#C7C7CC',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: Platform.OS === 'ios' ? 100 : 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
 
